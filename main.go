@@ -71,10 +71,12 @@ func handler(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(strs)
+	} else {
+		http.Error(w, fmt.Sprintf("method: %s", req.Method), http.StatusBadRequest)
+		return
 	}
-}
 
-var resultCounter int64
+}
 
 func processUrls(ctx context.Context, arr UrlsReq) ([]string, error) {
 	res := make([]string, len(arr))
@@ -82,6 +84,8 @@ func processUrls(ctx context.Context, arr UrlsReq) ([]string, error) {
 	sem := NewSemaphore(MaxUrlGetters)
 	doneChannel := make(chan bool, 1)
 	totalGetters := len(arr)
+	var resultCounter int64
+
 	for i := 0; i < totalGetters; i++ {
 		sem.Acquire()
 		select {
